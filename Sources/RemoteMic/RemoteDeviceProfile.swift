@@ -3,6 +3,7 @@ import Foundation
 enum XiaomiRemoteModel: String, Codable, CaseIterable, Identifiable {
     case rc001
     case rc003
+    case tvguoVoiceRemote = "tvguo_voice_remote"
     case appleSiriRemoteA2854 = "apple_siri_remote_a2854"
     case appleSiriRemoteA2540 = "apple_siri_remote_a2540"
     /// Chromecast（Google Chromecast 语音遥控器）。与苹果遥控器同理，case 始终存在以保证
@@ -31,6 +32,7 @@ enum XiaomiRemoteModel: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .rc001: return "remote.device.model.rc001"
         case .rc003: return "remote.device.model.rc003"
+        case .tvguoVoiceRemote: return "remote.device.model.tvguo_voice_remote"
         case .appleSiriRemoteA2854:
 #if SAYALL_SIRI_REMOTE_ENABLED
             return "remote.device.model.apple_siri_remote_a2854"
@@ -57,6 +59,7 @@ enum XiaomiRemoteModel: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .rc001: "xiaomi-remote-rc001"
         case .rc003: "xiaomi-remote-2-pro"
+        case .tvguoVoiceRemote: "tvguo-voice-remote"
         case .appleSiriRemoteA2854: "apple-siri-remote-a2854"
         case .appleSiriRemoteA2540: "apple-siri-remote-a2540"
         case .chromecastVoiceRemote: "chromecast-voice-remote"
@@ -123,6 +126,11 @@ enum VoiceRemoteCatalog {
             // 翻转（解码层，见 ATVVProtocol.lowNibbleFirst）——两者都不依赖型号归属。
             disModelNumbers: ["RC003"]
         ),
+        VoiceRemoteCatalogEntry(
+            model: .tvguoVoiceRemote,
+            photoResource: "RC003-remote-photo",
+            disModelNumbers: ["B713C_IQIYI", "B713C", "QIYI_REMOTE", "TVGUO"]
+        ),
     ]
 
     /// 本桥会考虑的广播名（设备自报，小写）。**只作连接前的辅助筛选**：
@@ -140,6 +148,11 @@ enum VoiceRemoteCatalog {
         "小米蓝牙遥控器2",
         "小米蓝牙遥控器2 pro",
         "arn9",
+        "qiyi_remote",
+        "qiyi remote",
+        "dianguo remote",
+        "tvguo remote",
+        "dianguo ble remote",
     ]
 
     /// 按 DIS 型号串识别型号。`raw` 是设备上报的原始串，子串命中即认——

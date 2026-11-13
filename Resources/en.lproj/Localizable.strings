@@ -352,6 +352,7 @@
 "remote.device.model" = "Model";
 "remote.device.model.rc001" = "Xiaomi Bluetooth Remote 2";
 "remote.device.model.rc003" = "Xiaomi Bluetooth Remote 2 Pro";
+"remote.device.model.tvguo_voice_remote" = "iQIYI TVGuo Remote";
 "remote.device.model.unrecognized" = "Unrecognized remote";
 "remote.device.model.apple_siri_remote_a2854" = "Apple Remote (7th Generation)";
 "remote.device.model.apple_siri_remote_a2540" = "Apple Remote (6th Generation)";

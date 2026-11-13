@@ -23,6 +23,7 @@ extension AppSettings {
     static func portableRemoteModel(_ model: XiaomiRemoteModel?) -> String {
         switch model {
         case .rc001: return "xiaomi-remote-rc001"
+        case .tvguoVoiceRemote: return "tvguo-voice-remote"
         case .appleSiriRemoteA2854: return "apple-siri-remote-a2854"
         case .appleSiriRemoteA2540: return "apple-siri-remote-a2540"
         case .chromecastVoiceRemote: return "chromecast-voice-remote"
