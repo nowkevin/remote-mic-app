@@ -847,7 +847,7 @@ struct OnboardingView: View {
                         .lineLimit(1)
                         .truncationMode(.tail)
                         .layoutPriority(1)
-                    if source == .xiaomiRemote {
+                    if source == .tvguoRemote {
                         Text(verbatim: localization.text("onboarding.control_source.recommended"))
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Color.accentColor)
@@ -4877,7 +4877,7 @@ struct OnboardingView: View {
         case .xiaomiRemote:
             return model == .rc001 || model == .rc003
         case .tvguoRemote:
-            return model == .tvguoVoiceRemote
+            return model == .tvguoVoiceRemote || model == .unknown
         case .siriRemote:
             guard model.isAppleSiriRemote else { return false }
             guard let generation = settings.onboardingAppleRemoteGeneration else { return true }

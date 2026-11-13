@@ -1819,8 +1819,11 @@ final class AppSettings: ObservableObject {
     }
 
     @discardableResult
-    func registerHIDRemote(fingerprint: String) -> UUID {
+    func registerHIDRemote(fingerprint: String, model: XiaomiRemoteModel = .unknown) -> UUID {
         if let existing = remoteDeviceProfiles.first(where: { $0.hidFingerprint == fingerprint }) {
+            if model != .unknown, existing.model == .unknown {
+                updateRemoteProfileModel(existing.id, model: model)
+            }
             return existing.id
         }
         let selectedUnboundIndex = remoteDeviceProfiles.firstIndex(where: {
@@ -1839,13 +1842,21 @@ final class AppSettings: ObservableObject {
                 remoteDeviceProfiles[index].mappings = configured.mappings
             }
             remoteDeviceProfiles[index].hidFingerprint = fingerprint
+            if model != .unknown {
+                remoteDeviceProfiles[index].model = model
+                ensureGestureTiming(for: model, profileID: remoteDeviceProfiles[index].id)
+            }
             return remoteDeviceProfiles[index].id
         }
         let profile = RemoteDeviceProfile(
+            model: model,
             hidFingerprint: fingerprint,
             mappings: mappingsForNewRemote()
         )
         remoteDeviceProfiles.append(profile)
+        if model != .unknown {
+            ensureGestureTiming(for: model, profileID: profile.id)
+        }
         return profile.id
     }
 

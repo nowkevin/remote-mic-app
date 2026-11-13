@@ -425,7 +425,7 @@ enum OnboardingControlSource: String, CaseIterable, Codable, Identifiable {
 
     static func migrated(from method: OnboardingControlMethod) -> Self {
         switch method {
-        case .physicalRemote: return .xiaomiRemote
+        case .physicalRemote: return .tvguoRemote
         case .iPhoneApp: return .appleCompanion
         case .webRemote: return .webRemote
         case .unselected: return .unselected

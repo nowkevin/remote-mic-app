@@ -848,6 +848,7 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
     )
     private var appleRemoteProfileIDs: [SiriRemoteDeviceIdentity: UUID] = [:]
     private var connectedAppleRemoteProfileIDs = Set<UUID>()
+    private var connectedTVGuoProfileIDs = Set<UUID>()
     private var appleRemoteActiveButtons: [SiriRemoteDeviceIdentity: Set<RemoteButton>] = [:]
     private var appleRemoteActiveControlIDs: [SiriRemoteDeviceIdentity: Set<String>] = [:]
     private var appleRemoteHoverClickDevices = Set<SiriRemoteDeviceIdentity>()
@@ -3864,17 +3865,33 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
             }
         }
         monitor.onActiveButtons = { [weak self] profileID, buttons in
-            guard let self, profileID == self.settings.selectedRemoteProfileID else { return }
+            guard let self else { return }
+            let isCurrent = profileID == self.settings.selectedRemoteProfileID ||
+                (self.settings.onboardingStep == .remote && !buttons.isEmpty)
+            guard isCurrent else { return }
             self.activeRemoteButtons = buttons
         }
         monitor.onButtonPressed = { [weak self, weak monitor] profileID, fingerprint, button in
             guard let self, let monitor else {
                 return profileID.map { ($0, true) }
             }
+            let isTVGuoContext = self.settings.onboardingControlSource == .tvguoRemote ||
+                self.settings.selectedRemoteProfile?.model == .tvguoVoiceRemote
+            let targetModel: XiaomiRemoteModel = isTVGuoContext ? .tvguoVoiceRemote : .unknown
+
             let existingProfileID = profileID
                 ?? self.settings.profileID(forHIDFingerprint: fingerprint)
             let resolvedProfileID = existingProfileID
-                ?? self.settings.registerHIDRemote(fingerprint: fingerprint)
+                ?? self.settings.registerHIDRemote(fingerprint: fingerprint, model: targetModel)
+
+            if isTVGuoContext {
+                if let profile = self.settings.remoteDeviceProfiles.first(where: { $0.id == resolvedProfileID }),
+                   profile.model == .unknown {
+                    self.settings.updateRemoteProfileModel(resolvedProfileID, model: .tvguoVoiceRemote)
+                }
+                self.connectedTVGuoProfileIDs.insert(resolvedProfileID)
+            }
+
             if resolvedProfileID == self.settings.selectedRemoteProfileID,
                self.macroFeature.isEditorActive {
                 self.macroFeature.noteButtonInteraction(button: button)
@@ -4817,6 +4834,7 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
         connectedRemoteProfileIDs = connectedBluetoothProfileIDs
             .union(connectedAppleRemoteProfileIDs)
             .union(connectedChromecastProfileIDs)
+            .union(connectedTVGuoProfileIDs)
         let bluetoothIsReady = allStates.contains { state in
             if case .ready = state { return true }
             return false
@@ -4824,6 +4842,7 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
         isConnected = bluetoothIsReady
             || !connectedAppleRemoteProfileIDs.isEmpty
             || !connectedChromecastProfileIDs.isEmpty
+            || !connectedTVGuoProfileIDs.isEmpty
         if let selected = settings.selectedRemoteProfile,
            selected.model.usesPrivateAdapter,
            !connectedRemoteProfileIDs.contains(selected.id) {
@@ -4834,6 +4853,9 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
         } else if let selectedRemoteProfileID = settings.selectedRemoteProfileID,
                   connectedChromecastProfileIDs.contains(selectedRemoteProfileID) {
             connectionStatus = LocalizedMessage("connection.status.chromecast_connected")
+        } else if let selectedRemoteProfileID = settings.selectedRemoteProfileID,
+                  connectedTVGuoProfileIDs.contains(selectedRemoteProfileID) {
+            connectionStatus = LocalizedMessage("connection.status.connected_to_device")
         } else if let selectedBluetoothBridge,
            let state = bluetoothBridgeStates[ObjectIdentifier(selectedBluetoothBridge)] {
             connectionStatus = state.message
@@ -4846,6 +4868,8 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
             connectionStatus = LocalizedMessage("connection.status.apple_remote_connected")
         } else if !connectedChromecastProfileIDs.isEmpty {
             connectionStatus = LocalizedMessage("connection.status.chromecast_connected")
+        } else if !connectedTVGuoProfileIDs.isEmpty {
+            connectionStatus = LocalizedMessage("connection.status.connected_to_device")
         } else if let state = allStates.first {
             connectionStatus = state.message
         } else {
