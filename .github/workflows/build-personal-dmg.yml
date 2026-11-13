@@ -1,0 +1,41 @@
+name: Build Personal DMG
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build SayAll DMG
+    runs-on: macos-14
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          echo "Building SayAll for macOS on Apple Silicon / macOS 14"
+
+      - name: Package local test app
+        env:
+          SAYALL_PRIVATE_PLATFORM_MODE: public
+          CODE_SIGN_IDENTITY: "-"
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/package-local-test-app.sh
+
+      - name: Build DMG package
+        run: |
+          mkdir -p dist
+          APP_PATH="$HOME/Applications/SayAll.app"
+          if [ ! -d "$APP_PATH" ]; then
+            APP_PATH="$HOME/Downloads/SayAll-test/SayAll.app"
+          fi
+          echo "Found app at: $APP_PATH"
+          hdiutil create -volname "SayAll" -srcfolder "$APP_PATH" -ov -format UDZO dist/SayAll-TVGuo.dmg
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SayAll-TVGuo-dmg
+          path: dist/SayAll-TVGuo.dmg
+          retention-days: 7
