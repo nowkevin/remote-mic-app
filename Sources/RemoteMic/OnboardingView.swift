@@ -4164,7 +4164,7 @@ struct OnboardingView: View {
         AppLogger.shared.write("ONBOARDING SECURE_INPUT phase=recovery_requested")
         secureInputWaitStartedAtUptime = ProcessInfo.processInfo.systemUptime
         switch settings.onboardingControlSource {
-        case .xiaomiRemote, .siriRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote:
             model.applyHIDSettings()
         case .chromecastRemote:
             prepareSelectedControlConnection()
@@ -4355,7 +4355,7 @@ struct OnboardingView: View {
         case .siriRemote:
             model.enableSiriRemoteForOnboarding()
             prepareSelectedControlConnection()
-        case .xiaomiRemote, .chromecastRemote, .unselected:
+        case .xiaomiRemote, .tvguoRemote, .chromecastRemote, .unselected:
             prepareSelectedControlConnection()
         }
     }
@@ -4804,7 +4804,7 @@ struct OnboardingView: View {
 
     private func prepareSelectedControlConnection() {
         switch settings.onboardingControlSource {
-        case .xiaomiRemote:
+        case .xiaomiRemote, .tvguoRemote:
             model.refreshRemoteDiscovery()
             model.applyHIDSettings()
         case .siriRemote:
