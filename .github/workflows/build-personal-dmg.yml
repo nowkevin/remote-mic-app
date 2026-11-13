@@ -13,7 +13,9 @@ jobs:
 
       - name: Setup environment
         run: |
-          echo "Building SayAll for macOS on Apple Silicon / macOS 14"
+          echo "Installing dependencies..."
+          brew install ripgrep
+
 
       - name: Package local test app
         env:
