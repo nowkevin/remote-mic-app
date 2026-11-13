@@ -388,6 +388,7 @@ enum OnboardingVoiceBindingPreference: String, Codable {
 enum OnboardingControlSource: String, CaseIterable, Codable, Identifiable {
     case unselected
     case xiaomiRemote = "xiaomi_remote"
+    case tvguoRemote = "tvguo_remote"
     case siriRemote = "siri_remote"
     case chromecastRemote = "chromecast_remote"
     case appleCompanion = "apple_companion"
@@ -402,7 +403,7 @@ enum OnboardingControlSource: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .unselected:
             return []
-        case .xiaomiRemote, .siriRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote:
             return [.hold]
         case .chromecastRemote, .appleCompanion, .webRemote:
             return [.hold, .toggle]
@@ -411,7 +412,7 @@ enum OnboardingControlSource: String, CaseIterable, Codable, Identifiable {
 
     var legacyControlMethod: OnboardingControlMethod {
         switch self {
-        case .xiaomiRemote, .siriRemote, .chromecastRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote, .chromecastRemote:
             return .physicalRemote
         case .appleCompanion:
             return .iPhoneApp
@@ -450,7 +451,7 @@ enum OnboardingControlValidationPolicy {
     ) -> Bool {
         guard step == .controls else { return false }
         switch source {
-        case .xiaomiRemote, .siriRemote, .chromecastRemote, .appleCompanion, .webRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote, .chromecastRemote, .appleCompanion, .webRemote:
             return true
         case .unselected:
             return false
@@ -467,7 +468,7 @@ enum OnboardingSecureInputPolicy {
     ) -> Bool {
         guard step == .remote || step == .controls else { return false }
         switch source {
-        case .xiaomiRemote, .siriRemote, .chromecastRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote, .chromecastRemote:
             return true
         case .appleCompanion, .webRemote, .unselected:
             return false
@@ -541,7 +542,7 @@ enum OnboardingBuildCapabilities {
     static func availableControlSources(
         siriRemotePackageInstalled: Bool
     ) -> [OnboardingControlSource] {
-        var sources: [OnboardingControlSource] = [.xiaomiRemote]
+        var sources: [OnboardingControlSource] = [.xiaomiRemote, .tvguoRemote]
         #if SAYALL_SIRI_REMOTE_ENABLED
         if siriRemotePackageInstalled { sources.append(.siriRemote) }
         #endif
@@ -715,6 +716,9 @@ enum OnboardingRemotePhotoKind: Equatable {
             }
             return .bundled(resourceName: VoiceRemoteCatalog.photoResource(for: .rc003)
                 ?? "RC003-remote-photo")
+        case .tvguoRemote:
+            return .bundled(resourceName: VoiceRemoteCatalog.photoResource(for: .tvguoVoiceRemote)
+                ?? "TVGuo-remote-photo")
         case .siriRemote:
             return .siriRemote
         case .chromecastRemote:

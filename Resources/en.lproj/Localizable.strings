@@ -892,6 +892,8 @@
 "onboarding.control_source.unselected.detail" = "Choose a controller.";
 "onboarding.control_source.xiaomi_remote.title" = "Xiaomi Bluetooth Remote 2 / 2 Pro";
 "onboarding.control_source.xiaomi_remote.detail" = "Hold the physical voice button and release it to stop.";
+"onboarding.control_source.tvguo_remote.title" = "iQIYI TVGuo Bluetooth Remote";
+"onboarding.control_source.tvguo_remote.detail" = "Hold the physical voice button and release it to stop.";
 "onboarding.control_source.siri_remote.title" = "Apple Remote (6th / 7th Generation)";
 "onboarding.control_source.siri_remote.detail" = "Hold to speak, release to stop. Try voice during setup; membership is required for daily use.";
 "onboarding.control_source.apple_remote.generation_6.title" = "Apple Remote (6th Generation)";

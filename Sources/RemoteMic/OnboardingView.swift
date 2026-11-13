@@ -811,7 +811,7 @@ struct OnboardingView: View {
 
     private var availablePhysicalControlSources: [OnboardingControlSource] {
         visibleControlSources.filter {
-            [.xiaomiRemote, .siriRemote].contains($0)
+            [.xiaomiRemote, .tvguoRemote, .siriRemote].contains($0)
         }
     }
 
@@ -901,6 +901,20 @@ struct OnboardingView: View {
         switch source {
         case .xiaomiRemote:
             if let image = bundledRemoteImage(resourceName: "RC003-remote-photo") {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: emphasized ? 42 : 30, height: emphasized ? 72 : 50)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else {
+                Image(systemName: controlSourceIcon(source))
+                    .font(.system(size: emphasized ? 21 : 17, weight: .medium))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: emphasized ? 40 : 34, height: emphasized ? 40 : 34)
+                    .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+            }
+        case .tvguoRemote:
+            if let image = bundledRemoteImage(resourceName: "TVGuo-remote-photo") {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
@@ -2356,7 +2370,7 @@ struct OnboardingView: View {
                     "onboarding.remote.chromecast_pairing.second",
                 ]
             )
-        case .xiaomiRemote, .appleCompanion, .webRemote, .unselected:
+        case .xiaomiRemote, .tvguoRemote, .appleCompanion, .webRemote, .unselected:
             return PhysicalRemotePairingGuide(
                 title: "onboarding.remote.first_pairing.title",
                 steps: [
@@ -2373,7 +2387,7 @@ struct OnboardingView: View {
 
     static func controlsDetailKey(for source: OnboardingControlSource) -> String {
         switch source {
-        case .xiaomiRemote:
+        case .xiaomiRemote, .tvguoRemote:
             return "onboarding.controls.xiaomi.detail"
         case .siriRemote:
             return "onboarding.controls.siri.detail"
@@ -2396,7 +2410,7 @@ struct OnboardingView: View {
         for source: OnboardingControlSource
     ) -> [RemoteButton]? {
         switch source {
-        case .xiaomiRemote:
+        case .xiaomiRemote, .tvguoRemote:
             return RemoteButton.xiaomiCases
         case .siriRemote:
             return [
@@ -2557,7 +2571,7 @@ struct OnboardingView: View {
 
     static func remoteNotFoundRecoveryDetailKey(for source: OnboardingControlSource) -> String {
         switch source {
-        case .xiaomiRemote, .siriRemote, .chromecastRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote, .chromecastRemote:
             return "onboarding.recovery.remote.not_found.physical_detail"
         case .appleCompanion:
             return "onboarding.recovery.remote.not_found.apple_companion_detail"
@@ -2641,7 +2655,7 @@ struct OnboardingView: View {
     @ViewBuilder
     private var selectedControlSourceIllustration: some View {
         switch settings.onboardingControlSource {
-        case .xiaomiRemote, .siriRemote, .chromecastRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote, .chromecastRemote:
             remoteIllustration
         case .appleCompanion, .webRemote:
             controlMethodIllustration
@@ -3682,7 +3696,7 @@ struct OnboardingView: View {
 
     private func controlSourceIcon(_ source: OnboardingControlSource) -> String {
         switch source {
-        case .xiaomiRemote: return "appletvremote.gen4.fill"
+        case .xiaomiRemote, .tvguoRemote: return "appletvremote.gen4.fill"
         case .siriRemote: return "appletvremote.gen4.fill"
         case .chromecastRemote: return "tv.and.hifispeaker.fill"
         case .appleCompanion: return "iphone.and.arrow.forward"
@@ -4816,14 +4830,19 @@ struct OnboardingView: View {
         suppressConnectedPhysicalRemoteAutoRouteOnce = false
         guard !suppressForUserBack,
               settings.onboardingStep == .remoteAvailability,
-              settings.onboardingControlSource == .unselected,
-              model.isOnboardingControlSourceConnected(.xiaomiRemote) else { return }
-        // Keep the control-device page visible so the user can see and confirm the
-        // selected hardware; an existing connection only preselects the card.
-        selectControlSource(.xiaomiRemote)
-        AppLogger.shared.write(
-            "ONBOARDING CONTROL_SOURCE preselected=xiaomi_remote reason=connected_physical_remote"
-        )
+              settings.onboardingControlSource == .unselected else { return }
+
+        if model.isOnboardingControlSourceConnected(.tvguoRemote) {
+            selectControlSource(.tvguoRemote)
+            AppLogger.shared.write(
+                "ONBOARDING CONTROL_SOURCE preselected=tvguo_remote reason=connected_physical_remote"
+            )
+        } else if model.isOnboardingControlSourceConnected(.xiaomiRemote) {
+            selectControlSource(.xiaomiRemote)
+            AppLogger.shared.write(
+                "ONBOARDING CONTROL_SOURCE preselected=xiaomi_remote reason=connected_physical_remote"
+            )
+        }
     }
 
     private func selectedControlAccepts(_ source: UsageEventSource) -> Bool {
@@ -4839,7 +4858,7 @@ struct OnboardingView: View {
 
     private func selectedControlAcceptsVoice(_ source: UsageEventSource?) -> Bool {
         switch settings.onboardingControlSource {
-        case .xiaomiRemote, .siriRemote, .chromecastRemote:
+        case .xiaomiRemote, .tvguoRemote, .siriRemote, .chromecastRemote:
             return source == .bluetoothRemote &&
                 (model.activePhysicalVoiceControlSource == settings.onboardingControlSource ||
                     selectedPhysicalRemoteProfileMatchesSource)
@@ -4856,7 +4875,9 @@ struct OnboardingView: View {
         guard let model = settings.selectedRemoteProfile?.model else { return false }
         switch settings.onboardingControlSource {
         case .xiaomiRemote:
-            return !model.usesPrivateAdapter
+            return model == .rc001 || model == .rc003
+        case .tvguoRemote:
+            return model == .tvguoVoiceRemote
         case .siriRemote:
             guard model.isAppleSiriRemote else { return false }
             guard let generation = settings.onboardingAppleRemoteGeneration else { return true }

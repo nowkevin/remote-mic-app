@@ -128,7 +128,7 @@ enum VoiceRemoteCatalog {
         ),
         VoiceRemoteCatalogEntry(
             model: .tvguoVoiceRemote,
-            photoResource: "RC003-remote-photo",
+            photoResource: "TVGuo-remote-photo",
             disModelNumbers: ["B713C_IQIYI", "B713C", "QIYI_REMOTE", "TVGUO"]
         ),
     ]

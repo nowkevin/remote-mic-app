@@ -629,7 +629,14 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
                 guard let model = settings.remoteDeviceProfiles.first(where: {
                     $0.id == profileID
                 })?.model else { return false }
-                return !model.usesPrivateAdapter
+                return model == .rc001 || model == .rc003
+            }
+        case .tvguoRemote:
+            return connectedRemoteProfileIDs.contains { profileID in
+                guard let model = settings.remoteDeviceProfiles.first(where: {
+                    $0.id == profileID
+                })?.model else { return false }
+                return model == .tvguoVoiceRemote
             }
         case .siriRemote:
             return !connectedAppleRemoteProfileIDs.isEmpty

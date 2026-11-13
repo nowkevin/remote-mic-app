@@ -891,6 +891,8 @@
 "onboarding.control_source.unselected.detail" = "请选择一个控制设备。";
 "onboarding.control_source.xiaomi_remote.title" = "小米蓝牙遥控器 2 / 2 Pro";
 "onboarding.control_source.xiaomi_remote.detail" = "实体语音键，按住说话、松开结束。";
+"onboarding.control_source.tvguo_remote.title" = "爱奇艺电视果蓝牙遥控器";
+"onboarding.control_source.tvguo_remote.detail" = "实体语音键，按住说话、松开结束。";
 "onboarding.control_source.siri_remote.title" = "苹果遥控器第 6 代 / 第 7 代";
 "onboarding.control_source.siri_remote.detail" = "按住语音键说话，松开结束。设置期间可试用，日常语音需会员。";
 "onboarding.control_source.apple_remote.generation_6.title" = "苹果遥控器第 6 代";
