@@ -868,6 +868,9 @@ ditto --norsrc --noextattr --noqtn --noacl \
   "$ROOT/Resources/RC003-remote-photo.png" \
   "$APP_DIR/Contents/Resources/RC003-remote-photo.png"
 ditto --norsrc --noextattr --noqtn --noacl \
+  "$ROOT/Resources/TVGuo-remote-photo.png" \
+  "$APP_DIR/Contents/Resources/TVGuo-remote-photo.png"
+ditto --norsrc --noextattr --noqtn --noacl \
   "$ROOT/Resources/Onboarding" \
   "$APP_DIR/Contents/Resources/Onboarding"
 ditto --norsrc --noextattr --noqtn --noacl \

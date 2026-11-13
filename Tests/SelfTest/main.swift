@@ -210,6 +210,8 @@ check(
         0x80: .volumeUp,
         0x81: .volumeDown,
         0xF1: .back,
+        RemoteButton.playPause.hidUsage: .playPause,
+        RemoteButton.mute.hidUsage: .mute,
     ],
     "verified Xiaomi RC001/RC003 usage table"
 )

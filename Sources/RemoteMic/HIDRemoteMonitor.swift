@@ -448,11 +448,17 @@ final class HIDRemoteMonitor {
         }
 
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
-        let matching = [
-            kIOHIDVendorIDKey as String: 0x2717,
-            kIOHIDProductIDKey as String: 0x32B8,
-        ] as CFDictionary
-        IOHIDManagerSetDeviceMatching(manager, matching)
+        let matchCriteria: [[String: Any]] = [
+            [
+                kIOHIDVendorIDKey as String: 0x2717,
+                kIOHIDProductIDKey as String: 0x32B8,
+            ],
+            [
+                kIOHIDVendorIDKey as String: 0x005D,
+                kIOHIDProductIDKey as String: 0x0071,
+            ],
+        ]
+        IOHIDManagerSetDeviceMatchingMultiple(manager, matchCriteria as CFArray)
 
         let context = Unmanaged.passUnretained(self).toOpaque()
         IOHIDManagerRegisterDeviceMatchingCallback(manager, hidDeviceMatched, context)

@@ -3874,6 +3874,23 @@ struct RemoteButtonsTests {
         #expect(RemoteHIDReportParser.usages(reportID: 1, data: Data([1])) == nil)
     }
 
+    @Test func parsesTVGuoStandardKeyboardReport() {
+        // Report 1: 8 bytes (modifiers, reserved, keycodes)
+        let data = Data([0x00, 0x00, 0x28, 0x52, 0x00, 0x00, 0x00, 0x00])
+        #expect(RemoteHIDReportParser.usages(reportID: 1, data: data) == Set([UInt16(0x28), UInt16(0x52)]))
+    }
+
+    @Test func parsesTVGuoConsumerReport() {
+        // Report 3: 3 bytes
+        // Bit 7: Vol+ (0x80)
+        // Bit 18: AC Home (0x4A)
+        // Byte 0 = 0x80 (Bit 7)
+        // Byte 1 = 0x00
+        // Byte 2 = 0x04 (Bit 2 -> Bit 18 overall)
+        let data = Data([0x80, 0x00, 0x04])
+        #expect(RemoteHIDReportParser.usages(reportID: 3, data: data) == Set([RemoteButton.volumeUp.hidUsage, RemoteButton.home.hidUsage]))
+    }
+
     @Test func everyKnownUsageHasDefaultBinding() {
         for button in Set(RemoteButton.usageMap.values) {
             #expect(AppSettings.defaultBindings[button] != nil, Comment(rawValue: button.rawValue))
@@ -3894,6 +3911,8 @@ struct RemoteButtonsTests {
             0x80: .volumeUp,
             0x81: .volumeDown,
             0xF1: .back,
+            RemoteButton.playPause.hidUsage: .playPause,
+            RemoteButton.mute.hidUsage: .mute,
         ])
     }
 

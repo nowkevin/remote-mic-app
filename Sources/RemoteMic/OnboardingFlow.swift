@@ -542,7 +542,7 @@ enum OnboardingBuildCapabilities {
     static func availableControlSources(
         siriRemotePackageInstalled: Bool
     ) -> [OnboardingControlSource] {
-        var sources: [OnboardingControlSource] = [.xiaomiRemote, .tvguoRemote]
+        var sources: [OnboardingControlSource] = [.tvguoRemote, .xiaomiRemote]
         #if SAYALL_SIRI_REMOTE_ENABLED
         if siriRemotePackageInstalled { sources.append(.siriRemote) }
         #endif

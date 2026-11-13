@@ -101,9 +101,12 @@ enum RemoteButton: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    static let usageMap = Dictionary(
-        uniqueKeysWithValues: xiaomiCases.map { ($0.hidUsage, $0) }
-    )
+    static let usageMap: [UInt16: RemoteButton] = {
+        var map = Dictionary(uniqueKeysWithValues: xiaomiCases.map { ($0.hidUsage, $0) })
+        map[RemoteButton.playPause.hidUsage] = .playPause
+        map[RemoteButton.mute.hidUsage] = .mute
+        return map
+    }()
 
     static func buttons(for usages: Set<UInt16>) -> Set<RemoteButton> {
         Set(usages.compactMap { usageMap[$0] })
@@ -1323,19 +1326,58 @@ enum ButtonAction: String, CaseIterable, Codable, Identifiable {
 
 enum RemoteHIDReportParser {
     static func usages(reportID: UInt32, data: Data) -> Set<UInt16>? {
-        guard reportID == 1 else { return nil }
         var bytes = Array(data)
-        if bytes.count == 7, bytes.first == UInt8(reportID) {
+        if !bytes.isEmpty, bytes.first == UInt8(reportID) {
             bytes.removeFirst()
         }
-        guard !bytes.isEmpty, bytes.count.isMultiple(of: 2) else { return nil }
 
-        var result = Set<UInt16>()
-        for index in stride(from: 0, to: bytes.count, by: 2) {
-            let usage = UInt16(bytes[index]) | UInt16(bytes[index + 1]) << 8
-            if usage != 0 { result.insert(usage) }
+        if reportID == 1 {
+            // Report 1: Standard 8-byte Keyboard report (modifiers, reserved, 6 keycodes)
+            if bytes.count == 8 {
+                var result = Set<UInt16>()
+                for key in bytes[2..<8] where key != 0 {
+                    result.insert(UInt16(key))
+                }
+                return result
+            }
+            // Xiaomi legacy 16-bit word report
+            guard !bytes.isEmpty, bytes.count.isMultiple(of: 2) else { return nil }
+            var result = Set<UInt16>()
+            for index in stride(from: 0, to: bytes.count, by: 2) {
+                let usage = UInt16(bytes[index]) | UInt16(bytes[index + 1]) << 8
+                if usage != 0 { result.insert(usage) }
+            }
+            return result
         }
-        return result
+
+        if reportID == 3 {
+            // Report 3: Consumer Controls bitmask (TVGuo remote Report 3)
+            // 3 bytes (24 bits) covering Consumer usages:
+            // Bit 3: Play/Pause (0xCD)
+            // Bit 4: Mute (0xE2)
+            // Bit 6: Menu (0x40)
+            // Bit 7: Vol+ (0xE9)
+            // Bit 8: Vol- (0xEA)
+            // Bit 18: AC Home (0x0223)
+            // Bit 19: AC Back (0x0224)
+            guard bytes.count >= 3 else { return nil }
+            var result = Set<UInt16>()
+            let b0 = bytes[0]
+            let b1 = bytes[1]
+            let b2 = bytes[2]
+
+            if (b0 & (1 << 3)) != 0 { result.insert(RemoteButton.playPause.hidUsage) }
+            if (b0 & (1 << 4)) != 0 { result.insert(RemoteButton.mute.hidUsage) }
+            if (b0 & (1 << 6)) != 0 { result.insert(RemoteButton.menu.hidUsage) }
+            if (b0 & (1 << 7)) != 0 { result.insert(RemoteButton.volumeUp.hidUsage) }
+            if (b1 & (1 << 0)) != 0 { result.insert(RemoteButton.volumeDown.hidUsage) }
+            if (b2 & (1 << 2)) != 0 { result.insert(RemoteButton.home.hidUsage) }
+            if (b2 & (1 << 3)) != 0 { result.insert(RemoteButton.back.hidUsage) }
+
+            return result
+        }
+
+        return nil
     }
 }
 
