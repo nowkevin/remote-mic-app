@@ -32,7 +32,7 @@ struct HIDUsageMapping: Equatable, Codable {
 
 enum RemoteVoiceFunctionMappingPolicy {
     // Xiaomi RC001 and RC003 expose the microphone button as keyboard F5 (usage page 7,
-    // usage 0x3e). TVGuo Voice Remote exposes it as keyboard 'i' (usage page 7, usage 0x0c).
+    // usage 0x3e). TVGuo Voice Remote exposes it as keyboard F12 (usage page 7, usage 0x45).
     // macOS represents the laptop Fn/Globe key as the Apple vendor top-case usage
     // (usage page 0xff, usage 3).
     static let remoteVoiceKey = HIDUsageMapping(
@@ -41,7 +41,7 @@ enum RemoteVoiceFunctionMappingPolicy {
     )
 
     static let tvguoVoiceKey = HIDUsageMapping(
-        source: 0x0000_0007_0000_000C,
+        source: 0x0000_0007_0000_0045,
         destination: 0x0000_00FF_0000_0003
     )
 
@@ -53,7 +53,7 @@ enum RemoteVoiceFunctionMappingPolicy {
     )
 
     static let neutralTVGuoVoiceKey = HIDUsageMapping(
-        source: 0x0000_0007_0000_000C,
+        source: 0x0000_0007_0000_0045,
         destination: 0x0
     )
 

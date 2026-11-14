@@ -1150,9 +1150,8 @@ final class HIDRemoteMonitor {
                     "released=\(Self.buttonList(for: released))" + timing
             )
         }
-        // Only classify the two documented remote voice usages. General key
-        // contents and report bytes never enter this diagnostic.
-        for (usage, kind) in [(UInt16(0x3E), "f5"), (UInt16(0x0C), "letter_i")] {
+        // Classify documented remote voice usages: Xiaomi F5 (0x3E), TVGuo F12 (0x45)
+        for (usage, kind) in [(UInt16(0x3E), "f5"), (UInt16(0x45), "f12"), (UInt16(0x0C), "letter_i")] {
             if pressed.contains(usage) || released.contains(usage) {
                 diagnosticLogger(
                     "HID VOICE_USAGE source_kind=\(kind) " +

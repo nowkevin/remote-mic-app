@@ -1353,26 +1353,25 @@ enum RemoteHIDReportParser {
         if reportID == 3 {
             // Report 3: Consumer Controls bitmask (TVGuo remote Report 3)
             // 3 bytes (24 bits) covering Consumer usages:
-            // Bit 3: Play/Pause (0xCD)
-            // Bit 4: Mute (0xE2)
-            // Bit 6: Menu (0x40)
-            // Bit 7: Vol+ (0xE9)
-            // Bit 8: Vol- (0xEA)
-            // Bit 18: AC Home (0x0223)
-            // Bit 19: AC Back (0x0224)
+            // Bit 4: Mute (0x10 -> 0xE2)
+            // Bit 5: Play/Pause (0x20 -> 0xEB)
+            // Bit 6: Menu (0x40 -> 0x40)
+            // Bit 7: Vol+ (0x80 -> 0xE9)
+            // Bit 8: Vol- (0x01 in byte 1 -> 0xEA)
+            // Bit 9: Channel+ (0x02 in byte 1 -> 0x9C)
+            // Bit 10: Channel- (0x04 in byte 1 -> 0x9D)
             guard bytes.count >= 3 else { return nil }
             var result = Set<UInt16>()
             let b0 = bytes[0]
             let b1 = bytes[1]
-            let b2 = bytes[2]
 
-            if (b0 & (1 << 3)) != 0 { result.insert(RemoteButton.playPause.hidUsage) }
             if (b0 & (1 << 4)) != 0 { result.insert(RemoteButton.mute.hidUsage) }
+            if (b0 & (1 << 5)) != 0 { result.insert(RemoteButton.playPause.hidUsage) }
             if (b0 & (1 << 6)) != 0 { result.insert(RemoteButton.menu.hidUsage) }
             if (b0 & (1 << 7)) != 0 { result.insert(RemoteButton.volumeUp.hidUsage) }
             if (b1 & (1 << 0)) != 0 { result.insert(RemoteButton.volumeDown.hidUsage) }
-            if (b2 & (1 << 2)) != 0 { result.insert(RemoteButton.home.hidUsage) }
-            if (b2 & (1 << 3)) != 0 { result.insert(RemoteButton.back.hidUsage) }
+            if (b1 & (1 << 1)) != 0 { result.insert(RemoteButton.up.hidUsage) } // Channel Up maps to Up
+            if (b1 & (1 << 2)) != 0 { result.insert(RemoteButton.down.hidUsage) } // Channel Down maps to Down
 
             return result
         }
