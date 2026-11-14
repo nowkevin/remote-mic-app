@@ -37,13 +37,17 @@ struct UpdateFeedSelection {
         guard let stableFeedURLString,
               let components = URLComponents(string: stableFeedURLString),
               components.scheme == "https",
-              components.host == "download.sayall.app",
               components.port == nil,
               components.user == nil,
               components.password == nil,
               components.query == nil,
               components.fragment == nil,
-              let url = components.url,
+              let url = components.url
+        else { return nil }
+        if components.host == "raw.githubusercontent.com" || components.host == "github.com" {
+            return url
+        }
+        guard components.host == "download.sayall.app",
               ["appcast.xml", "appcast-intel.xml"].contains(url.lastPathComponent),
               components.path == "/mac/channels/stable/\(url.lastPathComponent)"
         else { return nil }
@@ -54,6 +58,9 @@ struct UpdateFeedSelection {
         guard let stableFeedURL,
               var components = URLComponents(url: stableFeedURL, resolvingAgainstBaseURL: false)
         else { return nil }
+        if components.host == "raw.githubusercontent.com" || components.host == "github.com" {
+            return stableFeedURL
+        }
         components.path = "/mac/channels/preview/\(stableFeedURL.lastPathComponent)"
         return components.url
     }

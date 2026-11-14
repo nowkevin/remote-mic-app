@@ -97,9 +97,9 @@
 	<key>SUAutomaticallyUpdate</key>
 	<false/>
 	<key>SUEnableAutomaticChecks</key>
-	<true/>
+	<false/>
 	<key>SUFeedURL</key>
-	<string>https://download.sayall.app/mac/channels/stable/appcast.xml</string>
+	<string>https://raw.githubusercontent.com/nowkevin/remote-mic-app/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>8dWQovCnGPucjMcQuCHfrAv4PtjuDjJSbHNmItqYiyc=</string>
 	<key>SUScheduledCheckInterval</key>

@@ -32,10 +32,16 @@ struct HIDUsageMapping: Equatable, Codable {
 
 enum RemoteVoiceFunctionMappingPolicy {
     // Xiaomi RC001 and RC003 expose the microphone button as keyboard F5 (usage page 7,
-    // usage 0x3e). macOS represents the laptop Fn/Globe key as the Apple
-    // vendor top-case usage (usage page 0xff, usage 3).
+    // usage 0x3e). TVGuo Voice Remote exposes it as keyboard 'i' (usage page 7, usage 0x0c).
+    // macOS represents the laptop Fn/Globe key as the Apple vendor top-case usage
+    // (usage page 0xff, usage 3).
     static let remoteVoiceKey = HIDUsageMapping(
         source: 0x0000_0007_0000_003E,
+        destination: 0x0000_00FF_0000_0003
+    )
+
+    static let tvguoVoiceKey = HIDUsageMapping(
+        source: 0x0000_0007_0000_000C,
         destination: 0x0000_00FF_0000_0003
     )
 
@@ -43,6 +49,11 @@ enum RemoteVoiceFunctionMappingPolicy {
     // 按键事件（目标 usage 0），Fn 点按改由软件注入，避免物理按键按住时干扰注入。
     static let neutralRemoteVoiceKey = HIDUsageMapping(
         source: 0x0000_0007_0000_003E,
+        destination: 0x0
+    )
+
+    static let neutralTVGuoVoiceKey = HIDUsageMapping(
+        source: 0x0000_0007_0000_000C,
         destination: 0x0
     )
 
@@ -61,8 +72,14 @@ enum RemoteVoiceFunctionMappingPolicy {
     ) -> [HIDUsageMapping] {
         var desired = existing.filter {
             $0.source != remoteVoiceKey.source &&
+                $0.source != tvguoVoiceKey.source &&
                 (preservePowerKeyMapping || $0.source != suppressedRemotePowerKey.source)
         } + [voiceMapping]
+        if voiceMapping.source == remoteVoiceKey.source {
+            desired.append(tvguoVoiceKey)
+        } else if voiceMapping.source == neutralRemoteVoiceKey.source {
+            desired.append(neutralTVGuoVoiceKey)
+        }
         if let powerMapping {
             desired.append(powerMapping)
         }
@@ -77,6 +94,7 @@ enum RemoteVoiceFunctionMappingPolicy {
     ) -> [HIDUsageMapping] {
         var restored = current.filter {
             $0.source != remoteVoiceKey.source &&
+                $0.source != tvguoVoiceKey.source &&
                 (preservePowerKeyMapping || $0.source != suppressedRemotePowerKey.source)
         }
         if let originalVoiceMapping {
@@ -116,6 +134,8 @@ final class RemoteVoiceFunctionMapper {
 
     private static let vendorID = 0x2717
     private static let productID = 0x32B8
+    private static let tvguoVendorID = 0x005D
+    private static let tvguoProductID = 0x0071
     private static let mappingProperty = "UserKeyMapping" as CFString
 
     private struct OriginalMappings {
@@ -203,7 +223,8 @@ final class RemoteVoiceFunctionMapper {
                 }
                 originalMappings[registryID] = OriginalMappings(
                     voice: current.first {
-                        $0.source == RemoteVoiceFunctionMappingPolicy.remoteVoiceKey.source
+                        $0.source == RemoteVoiceFunctionMappingPolicy.remoteVoiceKey.source ||
+                            $0.source == RemoteVoiceFunctionMappingPolicy.tvguoVoiceKey.source
                     },
                     power: currentPower == RemoteVoiceFunctionMappingPolicy.suppressedRemotePowerKey
                         ? nil
@@ -237,9 +258,12 @@ final class RemoteVoiceFunctionMapper {
             appliedIndices.append(index)
             // Readback is diagnostic only. It does not prove native Fn delivery
             // and must not change the established mapping success/fallback policy.
-            let source = RemoteVoiceFunctionMappingPolicy.remoteVoiceKey.source
-            if service.readMappings().filter({ $0.source == source }) ==
-                desired.filter({ $0.source == source }) {
+            let voiceSources: Set<UInt64> = [
+                RemoteVoiceFunctionMappingPolicy.remoteVoiceKey.source,
+                RemoteVoiceFunctionMappingPolicy.tvguoVoiceKey.source,
+            ]
+            if service.readMappings().filter({ voiceSources.contains($0.source) }) ==
+                desired.filter({ voiceSources.contains($0.source) }) {
                 verifiedVoiceServiceCount += 1
             }
             if let locationID = service.locationID {
@@ -345,7 +369,9 @@ final class RemoteVoiceFunctionMapper {
     }
 
     static func systemServices() -> [RemoteVoiceMappingService] {
-        systemServices(vendor: vendorID, products: [productID])
+        let xiaomiServices = systemServices(vendor: vendorID, products: [productID])
+        let tvguoServices = systemServices(vendor: tvguoVendorID, products: [tvguoProductID])
+        return xiaomiServices + tvguoServices
     }
 
     static func systemServices(vendor: Int, products: Set<Int>) -> [RemoteVoiceMappingService] {
