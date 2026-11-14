@@ -786,6 +786,10 @@ final class HIDRemoteMonitor {
         data: Data,
         timestampNanoseconds: UInt64? = nil
     ) {
+        if reportID == 0x5A || data.count == 19 {
+            TVGuoAudioBridge.shared.handleExternalAudioPacket(data)
+            return
+        }
         // 登记必须在本线程立刻完成：系统原生音量事件可能早于主线程处理报告。
         prearmManagedNativeEvents(from: device, reportID: reportID, data: data)
         // 报告时刻在进入主线程之前定下来：主线程一旦排队，处理时刻就不再代表

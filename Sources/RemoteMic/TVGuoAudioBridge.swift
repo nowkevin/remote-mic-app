@@ -60,12 +60,12 @@ final class TVGuoAudioBridge: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     
     private func scanOrRetrieve() {
         let connected = central.retrieveConnectedPeripherals(withServices: [
-            CBUUID(string: "1812"), // HID Service
             CBUUID(string: "180A"), // Device Info
             CBUUID(string: "180F"), // Battery
             CBUUID(string: "F000FFC0-0451-4000-B000-000000000000")
         ])
         for p in connected where isTVGuoPeripheral(p) {
+            AppLogger.shared.write("TVGuoAudioBridge found connected peripheral: \(p.name ?? "unnamed")")
             connect(p)
             return
         }
@@ -121,6 +121,7 @@ final class TVGuoAudioBridge: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         for c in service.characteristics ?? [] {
+            AppLogger.shared.write("TVGuoAudioBridge discovered char: \(c.uuid.uuidString) prop=\(c.properties.rawValue)")
             // Report 0x5A or notification characteristics
             if c.properties.contains(.notify) {
                 peripheral.setNotifyValue(true, for: c)
@@ -131,9 +132,11 @@ final class TVGuoAudioBridge: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverDescriptorsFor characteristic: CBCharacteristic, error: Error?) {
         for d in characteristic.descriptors ?? [] {
+            AppLogger.shared.write("TVGuoAudioBridge discovered desc: \(d.uuid.uuidString) for \(characteristic.uuid.uuidString)")
             // Client Characteristic Configuration Descriptor
             if d.uuid.uuidString == "2902" {
                 // Actively write 01 00 to turn on notifications (Unlocks Report 0x5A Audio Stream!)
+                AppLogger.shared.write("TVGuoAudioBridge enabling 2902 notification for \(characteristic.uuid.uuidString)")
                 peripheral.writeValue(Data([0x01, 0x00]), for: d)
             }
         }
@@ -154,6 +157,10 @@ final class TVGuoAudioBridge: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         }
     }
     
+    func handleExternalAudioPacket(_ data: Data) {
+        handleAudioPacket(data)
+    }
+
     private func handleAudioPacket(_ data: Data) {
         if !isStreaming {
             isStreaming = true
