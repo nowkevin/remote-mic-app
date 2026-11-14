@@ -7121,12 +7121,7 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             AppLogger.shared.write("TVGUO AUDIO stream started")
-            self.prepareVirtualAudioOutputIfNeeded(reason: "tvguo_voice_start")
-            self.recordingAssetCoordinator.startRecording(
-                target: self.settings.onboardingVoiceTool,
-                source: .remoteVoice
-            )
-            self.isStreaming = true
+            self.beginVoiceSessionIfNeeded()
         }
     }
 
@@ -7134,9 +7129,7 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             AppLogger.shared.write("TVGUO AUDIO stream stopped")
-            self.isStreaming = false
-            self.recordingAssetCoordinator.stopRecording()
-            self.releaseVirtualAudioOutputIfUnused(reason: "tvguo_voice_stop")
+            self.endVoiceSessionIfNeeded()
         }
     }
 
