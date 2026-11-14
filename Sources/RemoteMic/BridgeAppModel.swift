@@ -508,7 +508,7 @@ enum VoiceKeyCompatibilityWarning: Equatable {
     }
 }
 
-final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDelegate, AVAudioPlayerDelegate {
+final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDelegate, TVGuoAudioBridgeDelegate, AVAudioPlayerDelegate {
     private static let longRecordingOpenTimeout: TimeInterval = 5
     private static let longRecordingCloseTimeout: TimeInterval = 2
     private static let rc003VoiceExtensionOpenTimeout: TimeInterval = 5
@@ -1455,6 +1455,8 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
                 self?.receivePhoneAudio(samples, source: .web)
             }
         }
+        TVGuoAudioBridge.shared.delegate = self
+        TVGuoAudioBridge.shared.start()
         transcriptHistoryToggleCancellable = settings.$localTranscriptHistoryEnabled
             .removeDuplicates()
             .sink { [weak self] isEnabled in
@@ -7112,6 +7114,59 @@ final class BridgeAppModel: NSObject, ObservableObject, XiaomiBluetoothBridgeDel
 
     func batteryLevel(for profileID: UUID) -> Int? {
         remoteBatteryLevels[profileID]
+    }
+
+    // MARK: - TVGuoAudioBridgeDelegate
+    func tvguoBridgeDidStartVoice(_ bridge: TVGuoAudioBridge) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            AppLogger.shared.write("TVGUO AUDIO stream started")
+            self.prepareVirtualAudioOutputIfNeeded(reason: "tvguo_voice_start")
+            self.recordingAssetCoordinator.startRecording(
+                target: self.settings.onboardingVoiceTool,
+                source: .remoteVoice
+            )
+            self.isStreaming = true
+        }
+    }
+
+    func tvguoBridgeDidStopVoice(_ bridge: TVGuoAudioBridge) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            AppLogger.shared.write("TVGUO AUDIO stream stopped")
+            self.isStreaming = false
+            self.recordingAssetCoordinator.stopRecording()
+            self.releaseVirtualAudioOutputIfUnused(reason: "tvguo_voice_stop")
+        }
+    }
+
+    func tvguoBridge(_ bridge: TVGuoAudioBridge, didDecode samples: [Int16]) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.recordingAssetCoordinator.append(samples: samples)
+            let deliveryGeneration = self.voiceAudioDeliveryDiagnostic.generation
+            let handledByFnTapMode = self.voiceFnTapSession.receive(samples)
+            if !handledByFnTapMode {
+                _ = self.audioOutput.enqueue(
+                    samples: samples,
+                    deliveryGeneration: deliveryGeneration
+                )
+            }
+            self.recordVoiceAudioReceipt(
+                samples: samples,
+                route: handledByFnTapMode ? .virtualAudioViaFnTap : .virtualAudioDirect
+            )
+            self.publishCurrentVoiceSampleReceiptIfNeeded(sampleCount: samples.count)
+        }
+    }
+
+    func tvguoBridge(_ bridge: TVGuoAudioBridge, didUpdateBatteryLevel level: Int?) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let level else { return }
+            if let profile = self.settings.remoteDeviceProfiles.first(where: { $0.model == .tvguoVoiceRemote }) {
+                self.remoteBatteryLevels[profile.id] = level
+            }
+        }
     }
 
     func powerState(for profileID: UUID) -> RemotePowerState? {
