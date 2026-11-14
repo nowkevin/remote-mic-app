@@ -37,17 +37,13 @@ struct UpdateFeedSelection {
         guard let stableFeedURLString,
               let components = URLComponents(string: stableFeedURLString),
               components.scheme == "https",
+              components.host == "download.sayall.app",
               components.port == nil,
               components.user == nil,
               components.password == nil,
               components.query == nil,
               components.fragment == nil,
-              let url = components.url
-        else { return nil }
-        if components.host == "raw.githubusercontent.com" || components.host == "github.com" {
-            return url
-        }
-        guard components.host == "download.sayall.app",
+              let url = components.url,
               ["appcast.xml", "appcast-intel.xml"].contains(url.lastPathComponent),
               components.path == "/mac/channels/stable/\(url.lastPathComponent)"
         else { return nil }
@@ -58,9 +54,6 @@ struct UpdateFeedSelection {
         guard let stableFeedURL,
               var components = URLComponents(url: stableFeedURL, resolvingAgainstBaseURL: false)
         else { return nil }
-        if components.host == "raw.githubusercontent.com" || components.host == "github.com" {
-            return stableFeedURL
-        }
         components.path = "/mac/channels/preview/\(stableFeedURL.lastPathComponent)"
         return components.url
     }
@@ -1049,11 +1042,8 @@ private final class RemoteMicAppDelegate: NSObject, NSApplicationDelegate, NSMen
     }
 
     private func configureUpdater() {
-        let checksForPreReleaseUpdates = model.settings.checksForPreReleaseUpdates
-        guard checksForPreReleaseUpdates else {
-            startUpdaterIfNeeded()
-            return
-        }
+        // Personal fork builds should not check upstream download.sayall.app updates
+        return
     }
 
     private func startUpdaterIfNeeded() {
