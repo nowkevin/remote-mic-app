@@ -2909,8 +2909,10 @@ struct OnboardingView: View {
         case .voiceTest:
             sidePanel(titleKey: "onboarding.side.voice_test") {
                 sideCheck("onboarding.side.voice_key", isComplete: voiceSessionStarted && voiceSessionEnded)
-                sideCheck("onboarding.side.samples", isComplete: voiceSamplesReceived)
-                sideCheck(audioSideCheckKey, isComplete: onboardingAudioReady)
+                if settings.onboardingControlSource != .tvguoRemote {
+                    sideCheck("onboarding.side.samples", isComplete: voiceSamplesReceived)
+                    sideCheck(audioSideCheckKey, isComplete: onboardingAudioReady)
+                }
                 sideCheck("onboarding.side.transcript", isComplete: verifiedTranscriptionAppeared)
             }
         case .controls:
@@ -3205,6 +3207,10 @@ struct OnboardingView: View {
             phoneAppInstallConfirmed: didConfirmPhoneAppInstalled
         )
         if settings.onboardingStep == .voiceTest {
+            if settings.onboardingControlSource == .tvguoRemote {
+                return (verifiedTranscriptionAppeared || (voiceSessionStarted && voiceSessionEnded)) &&
+                    selectedVoiceToolRuntimeReady
+            }
             return policyAllowsContinue &&
                 verifiedTranscriptionAppeared &&
                 selectedVoiceToolRuntimeReady

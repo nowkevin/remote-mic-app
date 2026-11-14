@@ -923,6 +923,10 @@ enum OnboardingFlowPolicy {
                 audioReady: capabilities.audioReady
             )
         case .voiceTest:
+            if controlSource == .tvguoRemote {
+                return (capabilities.transcriptionAppeared && !capabilities.manualTranscriptInputObserved) ||
+                    (capabilities.voiceSessionStarted && capabilities.voiceSessionEnded)
+            }
             return capabilities.voiceSessionStarted &&
                 capabilities.voiceSamplesReceived &&
                 capabilities.voiceSessionEnded &&
